@@ -12,6 +12,22 @@ export const receiveMessage = mutation({
       .withIndex("by_phone", (query) => query.eq("phone", args.phone))
       .unique();
 
+    if (existingUser && args.text.trim().toLowerCase() === "reset") {
+      await ctx.db.patch(existingUser._id, {
+        baseline: undefined,
+        runDays: undefined,
+        strengthSchedule: undefined,
+        targetDate: undefined,
+        onboardingStep: "baseline",
+        lastCheckInAt: undefined
+      });
+
+      return {
+        reply: "Let's start fresh. How long can you run comfortably today? Example: 20 minutes or 2 km.",
+        step: "baseline"
+      };
+    }
+
     if (!existingUser) {
       await ctx.db.insert("users", {
         phone: args.phone,
@@ -22,6 +38,18 @@ export const receiveMessage = mutation({
 
       return {
         reply: "Great. How many days can you realistically train each week? Reply with a number, like 2 or 3.",
+        step: "runDays"
+      };
+    }
+
+    if (existingUser.onboardingStep === "baseline") {
+      await ctx.db.patch(existingUser._id, {
+        baseline: args.text,
+        onboardingStep: "runDays"
+      });
+
+      return {
+        reply: "Thanks. How many days can you realistically train each week? Reply with a number, like 2 or 3.",
         step: "runDays"
       };
     }
@@ -56,8 +84,19 @@ export const receiveMessage = mutation({
         onboardingStep: "complete"
       });
 
+      await ctx.db.insert("plans", {
+        userId: existingUser._id,
+        targetWindow: "About 20 weeks, reviewed every week",
+        phase: "Foundation",
+        weeklyTarget: "2 easy run-walk sessions, 1 strength session, and recovery between hard days",
+        nextSession: "20 minutes of easy run-walk: 1 minute jogging, 2 minutes walking",
+        reason: "starting conservatively from your current baseline and building consistency before distance",
+        version: 1,
+        createdAt: Date.now()
+      });
+
       return {
-        reply: "I have enough to shape your first week. I will suggest a realistic 21K timeline and your first session next.",
+        reply: "Your first plan is ready. Timeline: about 20 weeks, reviewed weekly. Week 1: 2 easy run-walk sessions, 1 strength session, and recovery between hard days. First session: 20 minutes, alternating 1 minute jogging with 2 minutes walking. Keep it easy enough to speak in full sentences.",
         step: "complete"
       };
     }
