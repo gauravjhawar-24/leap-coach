@@ -102,6 +102,33 @@ function isCoachDecision(value: unknown): value is CoachDecision {
   );
 }
 
+function normalizeDecision(decision: CoachDecision): CoachDecision {
+  if (!decision.plan) {
+    return decision;
+  }
+
+  return {
+    ...decision,
+    plan: {
+      ...decision.plan,
+      days: decision.plan.days.map((day) => {
+        const { targetKm, durationMinutes, ...dayWithoutNullableFields } = day as typeof day & {
+          targetKm?: number | null;
+          durationMinutes?: number | null;
+        };
+
+        return {
+          ...dayWithoutNullableFields,
+          ...(targetKm === null || targetKm === undefined ? {} : { targetKm }),
+          ...(durationMinutes === null || durationMinutes === undefined
+            ? {}
+            : { durationMinutes })
+        };
+      })
+    }
+  };
+}
+
 export async function generateCoachDecision(input: {
   context: RunnerContext & Record<string, unknown>;
   userMessage: string;
@@ -175,7 +202,7 @@ export async function generateCoachDecision(input: {
       throw new Error("GEMINI_INVALID_DECISION");
     }
 
-    return parsed;
+    return normalizeDecision(parsed);
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error(`GEMINI_TIMEOUT_${Date.now() - startedAt}MS`);
