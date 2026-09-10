@@ -159,8 +159,8 @@ The coach owns the timeline. It can move the target window, hold progression, or
 
 | Required capability | Product/API/model | Exact endpoint/access | Limits | Verified how |
 |---|---|---|---|---|
-| WhatsApp send and receive for testing | Twilio WhatsApp testing environment or Sandbox | Twilio WhatsApp messaging API plus inbound webhook | Testers must join the Sandbox; production use has separate sender and template requirements | Official Twilio quickstart and Sandbox documentation checked 10 September 2026 |
-| Public webhook | Vercel route | HTTPS webhook endpoint | Must be publicly reachable; local testing may need a tunnel | Official Twilio quickstart describes webhook configuration |
+| WhatsApp send and receive for testing | Meta WhatsApp Cloud API test number | Graph API messages endpoint plus WhatsApp webhook subscription | Requires Meta Business Portfolio, WhatsApp Business Account, test phone number, access token, and webhook verification | Meta WhatsApp Cloud API setup requirements checked 10 September 2026; direct Meta docs were rate-limited during lookup |
+| Public webhook | Vercel route | HTTPS GET verification plus POST message webhook | Must be publicly reachable and verify the Meta token | WhatsApp Cloud API webhook model; endpoint implementation still pending |
 | Persistent plan data | Convex | Convex functions and tables | Credentials and schema must be configured in the project | Required fixed Build Week stack; setup still pending |
 | Hosting | Vercel | Git-connected deployment | Public URL required for webhook and demo | Required fixed Build Week stack; project not connected yet |
 | Coaching logic | TypeScript rules first, model optional | Local server function or Convex action | Model choice and cost are unverified until selected | Build rule: begin with deterministic adaptation for the critical path |
@@ -169,14 +169,14 @@ The coach owns the timeline. It can move the target window, hold progression, or
 ### Unsupported assumptions
 
 - A production WhatsApp Business sender is not assumed.
-- A Twilio account, WhatsApp Sandbox, verified recipient, webhook URL, and API credentials are not yet confirmed.
+- A Meta Business Portfolio, WhatsApp Business Account, test phone number, access token, webhook verification token, and phone number ID are not yet confirmed.
 - Race-date feasibility cannot be guaranteed.
 - The product does not claim medical safety or injury prevention.
 - The first version does not assume Strava, Cult, Apple Health, Garmin, or wearable integrations.
 
 ### Secrets and access
 
-Store Twilio credentials, Convex deployment values, and any model key only in local environment variables and Vercel or Convex environment settings. Never commit them to GitHub or place them in this file.
+Store Meta access tokens, phone number IDs, webhook verification tokens, Convex deployment values, and any model key only in local environment variables and Vercel or Convex environment settings. Never commit them to GitHub or place them in this file.
 
 ## 6. Rubric Strategy
 
@@ -225,7 +225,7 @@ Payment, SOM, why now, and moat remain honest and lightweight. They must not del
 - Counting Gaurav's own tests as signups.
 - Calling a static plan an adaptive coach.
 - Showing a dashboard instead of a user completing the WhatsApp flow.
-- Claiming production WhatsApp access before the provider is configured.
+- Claiming production WhatsApp access before the Meta test number and webhook are configured.
 - Giving medical or injury diagnoses.
 - Spending time on multiple agents or a workout library.
 
@@ -273,8 +273,9 @@ Payment, SOM, why now, and moat remain honest and lightweight. They must not del
 
 Required:
 
-- Verify Twilio account or another chosen WhatsApp provider.
-- Join a WhatsApp testing environment with one personal device.
+- Create or connect a Meta Business Portfolio and WhatsApp Business Account.
+- Add a test phone number and one verified tester.
+- Configure the Meta webhook verification and subscribe to the messages field.
 - Receive an inbound message at a public webhook.
 - Reply with one hardcoded message.
 - Create the GitHub repository.
@@ -288,7 +289,7 @@ Acceptance test:
 
 If behind, cut to:
 
-> Twilio WhatsApp testing environment, one webhook, one reply, and no AI model.
+> Meta test phone number, one verified tester, one webhook, one reply, and no AI model.
 
 Stop condition:
 
@@ -482,7 +483,7 @@ Number of real first-use users who completed onboarding and received a plan.
 
 | Risk | Probability | Damage | Earliest test | Mitigation | Fallback |
 |---|---|---|---|---|---|
-| WhatsApp provider setup fails | High | Critical | M0 webhook test | Use Twilio testing path first | Narrow WhatsApp test with one provider |
+| Meta WhatsApp setup fails | High | Critical | M0 test number and webhook | Use Meta's test assets and keep the first reply deterministic | Narrow WhatsApp test with one verified tester |
 | Testers do not join the Sandbox | Medium | High | Invite one tester in M0 | Give exact join instruction | Observe one tester on a screen share |
 | Beginners distrust timeline changes | Medium | High | Show two before/after examples | Explain every change in plain language | Manual approval before sending adaptation |
 | Product gives unsafe progression | Medium | Critical | Review adaptation rules | Conservative rules and pain escalation | Hold plan instead of increasing load |
@@ -494,7 +495,7 @@ Number of real first-use users who completed onboarding and received a plan.
 
 It is submission morning and the product failed because:
 
-1. WhatsApp setup took all the build time. Mitigation: test the provider before any UI or model work.
+1. Meta WhatsApp setup took all the build time. Mitigation: test the Meta test number and webhook before any UI or model work.
 2. The product generated a plan but did not visibly adapt it. Mitigation: build two deterministic adaptation branches first.
 3. Testers did not complete onboarding or daily check-ins. Mitigation: reduce onboarding to short WhatsApp replies and observe one user live.
 
@@ -545,16 +546,16 @@ M0 - feasibility and setup.
 - GitHub account and SSH access.
 - Vercel account and CLI access.
 - Convex account exists.
-- Official Twilio docs confirm a WhatsApp testing environment and inbound webhook path.
-- Twilio account and WhatsApp testing setup are not yet verified.
+- Meta Cloud API is now the selected WhatsApp provider.
+- Meta Business Portfolio, WhatsApp Business Account, test number, and webhook are not yet verified.
 
 ### Current blocker
 
-WhatsApp provider choice and first inbound webhook test.
+Meta WhatsApp test number and first inbound webhook test.
 
 ### Next single action
 
-Verify a Twilio WhatsApp testing environment and receive one inbound message at a public webhook before building the coaching logic.
+Create the Meta WhatsApp test assets and receive one inbound message at the public webhook before building the coaching logic.
 
 ## 15. Decision Log
 
@@ -567,3 +568,4 @@ Verify a Twilio WhatsApp testing environment and receive one inbound message at 
 | 10 Sep 2026 | Target beginner runners | User decision | Baseline assessment and conservative progression required |
 | 10 Sep 2026 | Revenue is primary track | User decision and named testers | Signups and live product quality lead the build |
 | 10 Sep 2026 | Skip the 30-minute validation text as a scope blocker | User personally experiences the problem | Validation remains evidence work, not idea approval |
+| 10 Sep 2026 | Switch WhatsApp provider from Twilio to Meta Cloud API | Twilio trial restricts custom replies and direct TwiML responses | Replace the webhook payload and outbound message implementation |
