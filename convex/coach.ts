@@ -129,6 +129,30 @@ export const saveValidatedPlan = internalMutation({
   }
 });
 
+export const completeOnboarding = internalMutation({
+  args: {
+    phone: v.string(),
+    targetDate: v.string()
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_phone", (query) => query.eq("phone", args.phone))
+      .unique();
+
+    if (!user) {
+      throw new Error("RUNNER_NOT_FOUND");
+    }
+
+    await ctx.db.patch(user._id, {
+      targetDate: args.targetDate,
+      onboardingStep: "complete"
+    });
+
+    return user._id;
+  }
+});
+
 export const receiveMessage = mutation({
   args: {
     phone: v.string(),
