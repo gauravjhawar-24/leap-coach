@@ -3,7 +3,7 @@ import type { CoachDecision, RunnerContext } from "./coachTypes";
 const coachDecisionSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["reply", "kind", "nextStep", "plan", "adjustment"],
+  required: ["reply", "kind", "nextStep", "profileUpdate", "plan", "adjustment"],
   properties: {
     reply: { type: "string" },
     kind: {
@@ -13,6 +13,23 @@ const coachDecisionSchema = {
     nextStep: {
       type: "string",
       enum: ["baseline", "runDays", "strength", "targetDate", "complete"]
+    },
+    profileUpdate: {
+      anyOf: [
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["field", "value"],
+          properties: {
+            field: {
+              type: "string",
+              enum: ["baseline", "runDays", "strengthSchedule", "targetDate"]
+            },
+            value: { type: "string" }
+          }
+        },
+        { type: "null" }
+      ]
     },
     plan: {
       anyOf: [
@@ -83,6 +100,8 @@ Use the runner context and latest message to decide the next useful coaching act
 
 When creating a plan, use exactly seven days labelled 1 through 7. Every run must have a kilometer target. Day 3 must contain named strength exercises or the runner's known class. Day 6 must be a concrete walk or rest action. Keep the plan conservative and explain the reason for the choice.
 
+During onboarding, compare the latest message with the current onboarding step. A greeting, acknowledgement, or unrelated message is not an answer: set profileUpdate to null, keep nextStep on the current step, and repeat the current question. Only set profileUpdate when the message contains a usable answer to that question.
+
 If distance is missing from the baseline, ask for distance before promising a kilometer target. If the latest check-in mentions pain or high soreness, prefer rest or a reduced next session.
 
 Return only the requested structured decision. Keep reply text short enough for WhatsApp and ask one question at a time.`;
@@ -97,6 +116,7 @@ function isCoachDecision(value: unknown): value is CoachDecision {
     typeof decision.reply === "string" &&
     typeof decision.kind === "string" &&
     typeof decision.nextStep === "string" &&
+    (decision.profileUpdate === null || typeof decision.profileUpdate === "object") &&
     (decision.plan === null || typeof decision.plan === "object") &&
     (decision.adjustment === null || typeof decision.adjustment === "object")
   );
@@ -109,6 +129,9 @@ function normalizeDecision(decision: CoachDecision): CoachDecision {
 
   return {
     ...decision,
+    profileUpdate: decision.profileUpdate
+      ? { ...decision.profileUpdate }
+      : null,
     plan: {
       ...decision.plan,
       days: decision.plan.days.map((day) => {

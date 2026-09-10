@@ -23,26 +23,15 @@ export const processMessage = action({
     });
 
     if (!runner) {
-      return await ctx.runMutation(api.coach.receiveMessage, args);
+      await ctx.runMutation(internal.coach.createRunner, { phone: args.phone });
+      runner = await ctx.runQuery(internal.coach.getRunnerContext, {
+        phone: args.phone
+      });
     }
 
     const normalizedText = args.text.trim().toLowerCase();
     if (normalizedText === "reset") {
       return await ctx.runMutation(api.coach.receiveMessage, args);
-    }
-
-    if (runner.onboardingStep && runner.onboardingStep !== "complete") {
-      if (runner.onboardingStep === "targetDate") {
-        await ctx.runMutation(internal.coach.completeOnboarding, {
-          phone: args.phone,
-          targetDate: args.text
-        });
-        runner = await ctx.runQuery(internal.coach.getRunnerContext, {
-          phone: args.phone
-        });
-      } else {
-        return await ctx.runMutation(api.coach.receiveMessage, args);
-      }
     }
 
     if (!runner) {
@@ -86,6 +75,15 @@ export const processMessage = action({
           } as const;
         }
 
+        if (decision.profileUpdate) {
+          await ctx.runMutation(internal.coach.applyProfileUpdate, {
+            phone: args.phone,
+            field: decision.profileUpdate.field,
+            value: decision.profileUpdate.value,
+            nextStep: decision.nextStep
+          });
+        }
+
         const firstRun = decision.plan.days.find((day) => day.type === "run");
         await ctx.runMutation(internal.coach.saveValidatedPlan, {
           userId: runner.userId,
@@ -101,6 +99,13 @@ export const processMessage = action({
           totalKm: decision.plan.totalKm,
           days: decision.plan.days,
           version: (runner.currentPlan?.version ?? 0) + 1
+        });
+      } else if (decision.profileUpdate) {
+        await ctx.runMutation(internal.coach.applyProfileUpdate, {
+          phone: args.phone,
+          field: decision.profileUpdate.field,
+          value: decision.profileUpdate.value,
+          nextStep: decision.nextStep
         });
       }
 

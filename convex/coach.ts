@@ -1,6 +1,7 @@
 import { internalMutation, internalQuery, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { PlanDay } from "./coachTypes";
+import { parseBaseline } from "./coachRules";
 
 const planDayValidator = v.object({
   day: v.number(),
@@ -73,6 +74,80 @@ export const getRunnerContext = internalQuery({
         createdAt: checkIn.createdAt
       }))
     };
+  }
+});
+
+export const createRunner = internalMutation({
+  args: { phone: v.string() },
+  handler: async (ctx, args) => {
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_phone", (query) => query.eq("phone", args.phone))
+      .unique();
+
+    if (existingUser) {
+      return existingUser._id;
+    }
+
+    return await ctx.db.insert("users", {
+      phone: args.phone,
+      onboardingStep: "baseline",
+      createdAt: Date.now()
+    });
+  }
+});
+
+export const applyProfileUpdate = internalMutation({
+  args: {
+    phone: v.string(),
+    field: v.union(
+      v.literal("baseline"),
+      v.literal("runDays"),
+      v.literal("strengthSchedule"),
+      v.literal("targetDate")
+    ),
+    value: v.string(),
+    nextStep: v.string()
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_phone", (query) => query.eq("phone", args.phone))
+      .unique();
+
+    if (!user) {
+      throw new Error("RUNNER_NOT_FOUND");
+    }
+
+    if (args.field === "baseline") {
+      const parsed = parseBaseline(args.value);
+      await ctx.db.patch(user._id, {
+        baseline: args.value,
+        baselineDistanceKm: parsed.distanceKm,
+        baselineTimeMinutes: parsed.timeMinutes,
+        onboardingStep: args.nextStep
+      });
+    } else if (args.field === "runDays") {
+      const numberMatch = args.value.match(/\d+/);
+      const trainingDaysPerWeek = numberMatch ? Number(numberMatch[0]) : undefined;
+      await ctx.db.patch(user._id, {
+        runDays: args.value,
+        trainingDaysPerWeek,
+        onboardingStep: args.nextStep
+      });
+    } else if (args.field === "strengthSchedule") {
+      await ctx.db.patch(user._id, {
+        strengthSchedule: args.value,
+        onboardingStep: args.nextStep
+      });
+    } else {
+      await ctx.db.patch(user._id, {
+        targetDate: args.value,
+        onboardingStep: args.nextStep
+      });
+    }
+
+    return user._id;
   }
 });
 

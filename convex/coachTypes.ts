@@ -60,10 +60,16 @@ export type CoachDecisionKind =
   | "check_in_response"
   | "safety_escalation";
 
+export type ProfileUpdate = {
+  field: "baseline" | "runDays" | "strengthSchedule" | "targetDate";
+  value: string;
+};
+
 export type CoachDecision = {
   reply: string;
   kind: CoachDecisionKind;
   nextStep: "baseline" | "runDays" | "strength" | "targetDate" | "complete";
+  profileUpdate: ProfileUpdate | null;
   plan: WeeklyPlan | null;
   adjustment: {
     reason: string;
