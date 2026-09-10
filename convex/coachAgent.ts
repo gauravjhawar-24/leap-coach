@@ -1,7 +1,7 @@
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
-import { validatePlan } from "./coachRules";
+import { parseBaseline, validatePlan } from "./coachRules";
 import { generateCoachDecision } from "./llm";
 
 type AgentReply = {
@@ -72,6 +72,31 @@ export const processMessage = action({
         kind: "question",
         validationStatus: "passed"
       };
+    }
+
+    if (runner.onboardingStep === "baseline") {
+      const baseline = parseBaseline(args.text);
+      if (baseline.distanceKm !== undefined) {
+        await ctx.runMutation(internal.coach.applyProfileUpdate, {
+          phone: args.phone,
+          field: "baseline",
+          value: args.text,
+          nextStep: "runDays"
+        });
+
+        await ctx.runMutation(internal.coach.saveAgentRun, {
+          userId: runner.userId,
+          decisionKind: "question",
+          validationStatus: "passed",
+          latencyMs: 0
+        });
+
+        return {
+          reply: "Got it. How many days can you realistically train each week? Reply with a number like 2 or 3.",
+          kind: "question",
+          validationStatus: "passed"
+        };
+      }
     }
 
     try {
