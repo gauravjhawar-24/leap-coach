@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 
 const verifyToken = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "leap-coach-dev";
 const graphApiVersion = process.env.META_GRAPH_API_VERSION ?? "v25.0";
@@ -31,11 +33,18 @@ export async function POST(request: Request) {
 
   const accessToken = process.env.META_ACCESS_TOKEN;
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
+  const convexUrl = process.env.CONVEX_URL;
 
-  if (!accessToken || !phoneNumberId) {
-    console.error("Missing Meta WhatsApp environment variables");
+  if (!accessToken || !phoneNumberId || !convexUrl) {
+    console.error("Missing WhatsApp or Convex environment variables");
     return NextResponse.json({ received: true, sent: false }, { status: 500 });
   }
+
+  const convex = new ConvexHttpClient(convexUrl);
+  const coachingReply = await convex.mutation(api.coach.receiveMessage, {
+    phone: message.from,
+    text: message.text?.body ?? ""
+  });
 
   const response = await fetch(
     `https://graph.facebook.com/${graphApiVersion}/${phoneNumberId}/messages`,
@@ -50,7 +59,7 @@ export async function POST(request: Request) {
         to: message.from,
         type: "text",
         text: {
-          body: "Leap Coach is connected. I will help you build a steady path to your first 21K."
+          body: coachingReply.reply
         }
       })
     }
