@@ -88,15 +88,15 @@ export const receiveMessage = mutation({
         userId: existingUser._id,
         targetWindow: "About 20 weeks, reviewed every week",
         phase: "Foundation",
-        weeklyTarget: "2 easy run-walk sessions, 1 strength session, and recovery between hard days",
-        nextSession: "20 minutes of easy run-walk: 1 minute jogging, 2 minutes walking",
+        weeklyTarget: "2 easy run-walk sessions of about 1.5-2 km each, 1 easy-to-moderate strength session, and at least 1 rest or easy day between runs",
+        nextSession: "20 minutes and about 1.5-2 km of easy run-walk: repeat 1 minute jogging and 2 minutes walking. Stop at 20 minutes even if the distance is different.",
         reason: "starting conservatively from your current baseline and building consistency before distance",
         version: 1,
         createdAt: Date.now()
       });
 
       return {
-        reply: "Your first plan is ready. Timeline: about 20 weeks, reviewed weekly. Week 1: 2 easy run-walk sessions, 1 strength session, and recovery between hard days. First session: 20 minutes, alternating 1 minute jogging with 2 minutes walking. Keep it easy enough to speak in full sentences.",
+        reply: "Your first plan is ready. Timeline: about 20 weeks, reviewed weekly. Week 1: 2 easy run-walk sessions, each about 1.5-2 km, plus 1 easy-to-moderate strength session. Leave at least 1 rest or easy day between runs. First session: 20 minutes and about 1.5-2 km, alternating 1 minute jogging with 2 minutes walking. Keep it easy enough to speak in full sentences; stop at 20 minutes even if your distance is different.",
         step: "complete"
       };
     }
