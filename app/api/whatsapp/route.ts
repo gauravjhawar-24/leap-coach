@@ -31,6 +31,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, sent: false });
   }
 
+  const text = message.type === "text" ? message.text?.body?.trim() : "";
+  if (!text) {
+    return NextResponse.json({ received: true, sent: false });
+  }
+
   const accessToken = process.env.META_ACCESS_TOKEN;
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
   const convexUrl = process.env.CONVEX_URL;
@@ -41,10 +46,18 @@ export async function POST(request: Request) {
   }
 
   const convex = new ConvexHttpClient(convexUrl);
-  const coachingReply = await convex.mutation(api.coach.receiveMessage, {
-    phone: message.from,
-    text: message.text?.body ?? ""
-  });
+  let coachingReply: { reply: string };
+  try {
+    coachingReply = await convex.action(api.coachAgent.processMessage, {
+      phone: message.from,
+      text
+    });
+  } catch (error) {
+    console.error("Leap Coach agent failed", {
+      name: error instanceof Error ? error.name : "UnknownError"
+    });
+    return NextResponse.json({ received: true, sent: false }, { status: 502 });
+  }
 
   const response = await fetch(
     `https://graph.facebook.com/${graphApiVersion}/${phoneNumberId}/messages`,
