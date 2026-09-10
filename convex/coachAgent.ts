@@ -1,26 +1,56 @@
 import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
 import { validatePlan } from "./coachRules";
 import { generateCoachDecision } from "./llm";
+
+type AgentReply = {
+  reply: string;
+  kind?: string;
+  validationStatus?: string;
+  step?: string;
+};
 
 export const processMessage = action({
   args: {
     phone: v.string(),
     text: v.string()
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<AgentReply> => {
     const startedAt = Date.now();
-    const runner = await ctx.runQuery(internal.coach.getRunnerContext, {
+    let runner = await ctx.runQuery(internal.coach.getRunnerContext, {
       phone: args.phone
     });
 
     if (!runner) {
+      return await ctx.runMutation(api.coach.receiveMessage, args);
+    }
+
+    const normalizedText = args.text.trim().toLowerCase();
+    if (normalizedText === "reset") {
+      return await ctx.runMutation(api.coach.receiveMessage, args);
+    }
+
+    if (runner.onboardingStep && runner.onboardingStep !== "complete") {
+      if (runner.onboardingStep === "targetDate") {
+        await ctx.runMutation(internal.coach.completeOnboarding, {
+          phone: args.phone,
+          targetDate: args.text
+        });
+        runner = await ctx.runQuery(internal.coach.getRunnerContext, {
+          phone: args.phone
+        });
+      } else {
+        return await ctx.runMutation(api.coach.receiveMessage, args);
+      }
+    }
+
+    if (!runner) {
       return {
-        reply: "I could not find your setup yet. Please send reset to start again.",
+        reply: "I could not load your setup. Please send reset to start again.",
         kind: "question",
-        validationStatus: "passed"
-      } as const;
+        validationStatus: "failed"
+      };
     }
 
     try {
