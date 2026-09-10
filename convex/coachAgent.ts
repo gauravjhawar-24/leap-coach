@@ -11,6 +11,30 @@ type AgentReply = {
   step?: string;
 };
 
+function questionForStep(step: string | undefined): string {
+  if (step === "baseline") {
+    return "How long or how far can you run comfortably today? Reply with both if you can, for example: 2 km in 20 minutes.";
+  }
+
+  if (step === "runDays") {
+    return "How many days can you realistically train each week? Reply with a number like 2 or 3.";
+  }
+
+  if (step === "strength") {
+    return "Which days do you usually do strength training or attend a class? Reply with the days, or say none.";
+  }
+
+  if (step === "targetDate") {
+    return "Are you training for a specific 21K date? Reply with a date, or say no date.";
+  }
+
+  return "Tell me how today's training felt: easy, right, or hard. Also mention any soreness or pain.";
+}
+
+function isSimpleGreeting(text: string): boolean {
+  return /^(hi|hello|hey|okay|ok|thanks|thank you)$/i.test(text.trim());
+}
+
 export const processMessage = action({
   args: {
     phone: v.string(),
@@ -39,6 +63,14 @@ export const processMessage = action({
         reply: "I could not load your setup. Please send reset to start again.",
         kind: "question",
         validationStatus: "failed"
+      };
+    }
+
+    if (runner.onboardingStep !== "complete" && isSimpleGreeting(args.text)) {
+      return {
+        reply: questionForStep(runner.onboardingStep),
+        kind: "question",
+        validationStatus: "passed"
       };
     }
 
@@ -122,6 +154,11 @@ export const processMessage = action({
         validationStatus: "passed"
       } as const;
     } catch (error) {
+      console.error("Leap Coach agent error", {
+        step: runner.onboardingStep,
+        error: error instanceof Error ? error.message : "AGENT_FAILED"
+      });
+
       await ctx.runMutation(internal.coach.saveAgentRun, {
         userId: runner.userId,
         decisionKind: "question",
@@ -131,7 +168,10 @@ export const processMessage = action({
       });
 
       return {
-        reply: "I am unable to update your plan right now. Your last saved plan is still active. Please try again in a few minutes.",
+        reply:
+          runner.onboardingStep !== "complete"
+            ? questionForStep(runner.onboardingStep)
+            : "I could not understand that check-in. Tell me whether the session felt easy, right, or hard, and mention any soreness or pain.",
         kind: "question",
         validationStatus: "failed"
       } as const;
