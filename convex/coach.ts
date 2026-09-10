@@ -84,19 +84,29 @@ export const receiveMessage = mutation({
         onboardingStep: "complete"
       });
 
+      const firstWeekPlan = [
+        "Day 1 - Run 1: 20 minutes, about 1.5-2 km, alternating 1 minute jogging and 2 minutes walking.",
+        "Day 2 - Recovery: Rest or take an easy 20-30 minute walk.",
+        "Day 3 - Strength: One easy-to-moderate strength session. Do not train to failure.",
+        "Day 4 - Run 2: 20 minutes, about 1.5-2 km, using the same 1 minute jogging and 2 minutes walking pattern.",
+        "Day 5 - Recovery: Rest or do gentle mobility. No running.",
+        "Day 6 - Optional easy movement: 20-30 minute walk, or complete rest if tired.",
+        "Day 7 - Rest and review: Rest, then check in with how the week felt so next week's plan can be adjusted."
+      ].join(" ");
+
       await ctx.db.insert("plans", {
         userId: existingUser._id,
         targetWindow: "About 20 weeks, reviewed every week",
         phase: "Foundation",
-        weeklyTarget: "2 easy run-walk sessions of about 1.5-2 km each, 1 easy-to-moderate strength session, and at least 1 rest or easy day between runs",
-        nextSession: "20 minutes and about 1.5-2 km of easy run-walk: repeat 1 minute jogging and 2 minutes walking. Stop at 20 minutes even if the distance is different.",
+        weeklyTarget: firstWeekPlan,
+        nextSession: "Day 1 - Run 1: 20 minutes and about 1.5-2 km of easy run-walk. Repeat 1 minute jogging and 2 minutes walking, and stop at 20 minutes even if the distance is different.",
         reason: "starting conservatively from your current baseline and building consistency before distance",
         version: 1,
         createdAt: Date.now()
       });
 
       return {
-        reply: "Your first plan is ready. Timeline: about 20 weeks, reviewed weekly. Week 1: 2 easy run-walk sessions, each about 1.5-2 km, plus 1 easy-to-moderate strength session. Leave at least 1 rest or easy day between runs. First session: 20 minutes and about 1.5-2 km, alternating 1 minute jogging with 2 minutes walking. Keep it easy enough to speak in full sentences; stop at 20 minutes even if your distance is different.",
+        reply: `Your first plan is ready. Timeline: about 20 weeks, reviewed weekly.\n\nWeek 1:\n${firstWeekPlan.replaceAll(". ", ".\n") }\n\nKeep every run easy enough to speak in full sentences. After each day, send me how it felt so I can adjust the next session.`,
         step: "complete"
       };
     }
