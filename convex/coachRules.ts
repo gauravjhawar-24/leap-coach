@@ -28,6 +28,11 @@ export function calculateStartingKm(context: RunnerContext): number | null {
   return roundToTenth(context.baselineDistanceKm);
 }
 
+export function parseTrainingDays(text: string): number | null {
+  const match = text.match(/(?:^|\D)([1-7])(?:\s*(?:days?|times?)\b)?/i);
+  return match ? Number(match[1]) : null;
+}
+
 export function calculateWeeklyKm(context: RunnerContext): WeeklyKmTarget | null {
   const startingKm = calculateStartingKm(context);
 

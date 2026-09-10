@@ -1,7 +1,7 @@
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
-import { parseBaseline, validatePlan } from "./coachRules";
+import { parseBaseline, parseTrainingDays, validatePlan } from "./coachRules";
 import { generateCoachDecision } from "./llm";
 
 type AgentReply = {
@@ -93,6 +93,31 @@ export const processMessage = action({
 
         return {
           reply: "Got it. How many days can you realistically train each week? Reply with a number like 2 or 3.",
+          kind: "question",
+          validationStatus: "passed"
+        };
+      }
+    }
+
+    if (runner.onboardingStep === "runDays") {
+      const trainingDays = parseTrainingDays(args.text);
+      if (trainingDays !== null) {
+        await ctx.runMutation(internal.coach.applyProfileUpdate, {
+          phone: args.phone,
+          field: "runDays",
+          value: args.text,
+          nextStep: "strength"
+        });
+
+        await ctx.runMutation(internal.coach.saveAgentRun, {
+          userId: runner.userId,
+          decisionKind: "question",
+          validationStatus: "passed",
+          latencyMs: 0
+        });
+
+        return {
+          reply: "Got it. Which days do you usually do strength training or attend a class? Reply with the days, or say none.",
           kind: "question",
           validationStatus: "passed"
         };

@@ -19,6 +19,15 @@ These examples are the first verification set for `convex/coachRules.ts`. They a
 | `baselineDistanceKm: 3` | Starting distance `3`; Week target `2.3 km + 2.6 km = 4.9 km` |
 | only `baselineTimeMinutes: 20` | Starting distance `null`; ask for distance before creating a kilometer plan |
 
+## Training days parsing
+
+| Input | Expected result |
+|---|---|
+| `5` | `5` |
+| `5 days` | `5` |
+| `I can train 5 times a week` | `5` |
+| `every day` | `null`; ask for a number |
+
 ## Recovery choice
 
 | Check-in | Expected result |
