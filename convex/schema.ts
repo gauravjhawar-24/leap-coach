@@ -7,6 +7,10 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     baseline: v.optional(v.string()),
+    runDays: v.optional(v.string()),
+    strengthSchedule: v.optional(v.string()),
+    targetDate: v.optional(v.string()),
+    onboardingStep: v.optional(v.string()),
     createdAt: v.number(),
     lastCheckInAt: v.optional(v.number())
   }).index("by_phone", ["phone"]),
