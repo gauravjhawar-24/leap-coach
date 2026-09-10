@@ -9,6 +9,10 @@
  */
 
 import type * as coach from "../coach.js";
+import type * as coachAgent from "../coachAgent.js";
+import type * as coachRules from "../coachRules.js";
+import type * as coachTypes from "../coachTypes.js";
+import type * as llm from "../llm.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +22,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   coach: typeof coach;
+  coachAgent: typeof coachAgent;
+  coachRules: typeof coachRules;
+  coachTypes: typeof coachTypes;
+  llm: typeof llm;
 }>;
 
 /**
