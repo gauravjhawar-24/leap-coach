@@ -79,7 +79,11 @@ export async function POST(request: Request) {
   );
 
   if (!response.ok) {
-    console.error("Meta WhatsApp send failed", response.status);
+    const errorBody = await response.text();
+    console.error("Meta WhatsApp send failed", {
+      status: response.status,
+      body: errorBody.slice(0, 500)
+    });
     return NextResponse.json({ received: true, sent: false }, { status: 502 });
   }
 
