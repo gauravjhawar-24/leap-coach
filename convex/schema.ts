@@ -15,7 +15,9 @@ export default defineSchema({
     targetDate: v.optional(v.string()),
     onboardingStep: v.optional(v.string()),
     createdAt: v.number(),
-    lastCheckInAt: v.optional(v.number())
+    lastCheckInAt: v.optional(v.number()),
+    reminderHour: v.optional(v.number()),
+    lastReminderSentAt: v.optional(v.number())
   }).index("by_phone", ["phone"]),
 
   plans: defineTable({

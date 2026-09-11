@@ -3,7 +3,7 @@ import type { CoachDecision, RunnerContext } from "./coachTypes";
 const coachDecisionSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["reply", "kind", "nextStep", "profileUpdate", "plan", "adjustment"],
+  required: ["reply", "kind", "nextStep", "profileUpdate", "checkIn", "plan", "adjustment"],
   properties: {
     reply: { type: "string" },
     kind: {
@@ -26,6 +26,23 @@ const coachDecisionSchema = {
               enum: ["baseline", "runDays", "strengthSchedule", "targetDate"]
             },
             value: { type: "string" }
+          }
+        },
+        { type: "null" }
+      ]
+    },
+    checkIn: {
+      anyOf: [
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["completed", "effort", "soreness", "pain", "note"],
+          properties: {
+            completed: { type: "boolean" },
+            effort: { type: "string", enum: ["easy", "right", "hard"] },
+            soreness: { type: "string", enum: ["none", "some", "high"] },
+            pain: { type: "string", enum: ["none", "possible", "high"] },
+            note: { type: "string" }
           }
         },
         { type: "null" }
@@ -104,6 +121,8 @@ During onboarding, compare the latest message with the current onboarding step. 
 
 If distance is missing from the baseline, ask for distance before promising a kilometer target. If the latest check-in mentions pain or high soreness, prefer rest or a reduced next session.
 
+When the runner is fully onboarded, interpret a training update as a check-in. Set checkIn with completed, effort, soreness, pain, and a short note. If it changes the next session, include an adjustment. Do not treat a greeting or unrelated message as a check-in.
+
 Return only the requested structured decision. Keep reply text short enough for WhatsApp and ask one question at a time.`;
 
 function isCoachDecision(value: unknown): value is CoachDecision {
@@ -117,6 +136,7 @@ function isCoachDecision(value: unknown): value is CoachDecision {
     typeof decision.kind === "string" &&
     typeof decision.nextStep === "string" &&
     (decision.profileUpdate === null || typeof decision.profileUpdate === "object") &&
+    (decision.checkIn === null || typeof decision.checkIn === "object") &&
     (decision.plan === null || typeof decision.plan === "object") &&
     (decision.adjustment === null || typeof decision.adjustment === "object")
   );

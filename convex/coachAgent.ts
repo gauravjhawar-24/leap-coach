@@ -130,6 +130,25 @@ export const processMessage = action({
         userMessage: args.text
       });
 
+      if (decision.checkIn) {
+        await ctx.runMutation(internal.coach.saveCheckIn, {
+          userId: runner.userId,
+          completed: decision.checkIn.completed,
+          effort: decision.checkIn.effort,
+          soreness: decision.checkIn.soreness,
+          pain: decision.checkIn.pain,
+          note: decision.checkIn.note
+        });
+      }
+
+      if (decision.adjustment) {
+        await ctx.runMutation(internal.coach.adjustNextSession, {
+          userId: runner.userId,
+          nextSession: decision.adjustment.nextSessionChange,
+          reason: decision.adjustment.reason
+        });
+      }
+
       if (decision.plan) {
         const validation = validatePlan(decision.plan, {
           baselineDistanceKm: runner.baselineDistanceKm,

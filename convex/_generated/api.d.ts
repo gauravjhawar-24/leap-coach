@@ -13,6 +13,7 @@ import type * as coachAgent from "../coachAgent.js";
 import type * as coachRules from "../coachRules.js";
 import type * as coachTypes from "../coachTypes.js";
 import type * as llm from "../llm.js";
+import type * as reminders from "../reminders.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   coachRules: typeof coachRules;
   coachTypes: typeof coachTypes;
   llm: typeof llm;
+  reminders: typeof reminders;
 }>;
 
 /**

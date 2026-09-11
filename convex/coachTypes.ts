@@ -65,11 +65,20 @@ export type ProfileUpdate = {
   value: string;
 };
 
+export type CheckInData = {
+  completed: boolean;
+  effort: CheckInEffort;
+  soreness: SorenessLevel;
+  pain: PainLevel;
+  note: string;
+};
+
 export type CoachDecision = {
   reply: string;
   kind: CoachDecisionKind;
   nextStep: "baseline" | "runDays" | "strength" | "targetDate" | "complete";
   profileUpdate: ProfileUpdate | null;
+  checkIn: CheckInData | null;
   plan: WeeklyPlan | null;
   adjustment: {
     reason: string;

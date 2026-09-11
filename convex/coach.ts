@@ -92,6 +92,7 @@ export const createRunner = internalMutation({
     return await ctx.db.insert("users", {
       phone: args.phone,
       onboardingStep: "baseline",
+      reminderHour: 20,
       createdAt: Date.now()
     });
   }
@@ -169,6 +170,52 @@ export const saveAgentRun = internalMutation({
       ...args,
       createdAt: Date.now()
     });
+  }
+});
+
+export const saveCheckIn = internalMutation({
+  args: {
+    userId: v.id("users"),
+    completed: v.boolean(),
+    effort: v.union(v.literal("easy"), v.literal("right"), v.literal("hard")),
+    soreness: v.union(v.literal("none"), v.literal("some"), v.literal("high")),
+    pain: v.union(v.literal("none"), v.literal("possible"), v.literal("high")),
+    note: v.string()
+  },
+  handler: async (ctx, args) => {
+    const checkInId = await ctx.db.insert("checkIns", {
+      ...args,
+      createdAt: Date.now()
+    });
+
+    await ctx.db.patch(args.userId, { lastCheckInAt: Date.now() });
+    return checkInId;
+  }
+});
+
+export const adjustNextSession = internalMutation({
+  args: {
+    userId: v.id("users"),
+    nextSession: v.string(),
+    reason: v.string()
+  },
+  handler: async (ctx, args) => {
+    const activePlan = await ctx.db
+      .query("plans")
+      .withIndex("by_user", (query) => query.eq("userId", args.userId))
+      .order("desc")
+      .first();
+
+    if (!activePlan) {
+      return null;
+    }
+
+    await ctx.db.patch(activePlan._id, {
+      nextSession: args.nextSession,
+      reason: args.reason
+    });
+
+    return activePlan._id;
   }
 });
 
